@@ -2,7 +2,7 @@
 
 This is a Python package to interact with [QChain](https://qchain.ai) blockchain API.
 
-Requires `python3`.
+Requires `python3`, `m2crypto` with `openssl`.
 
 ## Supported methods
 
@@ -10,9 +10,16 @@ Requires `python3`.
 Transfer funds from your node to any node.
 
 ## Usage
-The package is under development, the only way to use it — is to clone the `src` folder, append `requirements.txt` to your project's requirements and run `pip install -r requirements.txt`.
+The package is under development, please download wheel file `dist/qchainpy-*-none-any.whl` and execute:
 
+```bash
+pip install qchainpy-*-none-any.whl
+```
 *This will be fixed soon* and the package will be distributed from pypi repo.
+
+You also need `m2cypto`, follow installation guide on [this page](https://gitlab.com/m2crypto/m2crypto/-/blob/master/INSTALL.rst).
+
+### Follow the steps
 
 1. In order to use QChain API you need a QNode wallet running on Windows Server machine. 
 

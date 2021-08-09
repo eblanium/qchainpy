@@ -1,5 +1,5 @@
-from src.qchainpy.providers.authorization_provider import AuthorizationProvider
-from src.qchainpy.qdt import Qdt
+from .providers.authorization_provider import AuthorizationProvider
+from .qdt import Qdt
 
 
 class Client:

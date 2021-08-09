@@ -31,10 +31,14 @@ class Qdt:
                 error = r.get('error')
                 r.setdefault('explanation', self._map_error(error))
             return r
-        return None
+        return response.json()
 
     def _map_error(self, error):
         if error == 'The specified file was not found':
             return 'Put your private key inside qnode folder'
+        if error == 'must logged in':
+            return 'Login into your node'
+        if error == 'Insufficient funds':
+            return 'Put some tokens on your node'
         else:
             return 'Unknown'

@@ -10,9 +10,13 @@ class AuthorizationProvider:
     __doc__ = """"""
 
     def __init__(self, key_path, passphrase=None):
+        def pw_callback(*args):
+            return passphrase
         with open(key_path, 'rb') as f:
-            self._key = M2Crypto.RSA.load_key_string(f.read())
-        pass
+            self._key = M2Crypto.RSA.load_key_string(
+                string=f.read(),
+                callback=pw_callback
+            )
 
     def get_sign(self, data):
         data_dump = json.dumps(data).replace(" ", "").encode()

@@ -8,10 +8,9 @@ from src.qchainpy.providers.authorization_provider import AuthorizationProvider
 class TestAPMethods(unittest.TestCase):
     def setUp(self):
         key_path = os.path.join(Path(__file__).resolve().parent.parent, 'keys/private.key')
-        passphrase = None
         self.ap = AuthorizationProvider(
             key_path=key_path,
-            passphrase=passphrase
+            passphrase='123'
         )
 
     def test_sign(self):
