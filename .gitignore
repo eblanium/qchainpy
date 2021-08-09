@@ -116,3 +116,4 @@ dmypy.json
 # IDEA setup
 .idea
 .DS_Store
+*.key
