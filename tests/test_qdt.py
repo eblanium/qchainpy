@@ -14,6 +14,12 @@ class TestQdtMethods(unittest.TestCase):
             key_path=key_path,
             passphrase=passphrase
         )
+        key_path = os.path.join(Path(__file__).resolve().parent, 'keys/contract.key')
+        passphrase = None
+        self.ap_contract = AuthorizationProvider(
+            key_path=key_path,
+            passphrase=passphrase
+        )
 
     def test_transfer_to_node_id(self):
         url = os.getenv('API_URL', default=None)
@@ -54,6 +60,47 @@ class TestQdtMethods(unittest.TestCase):
             recipient='37542'
         )
         self.assertEqual(response.get('success'), 'false')
+
+    def test_create_payment(self):
+        qdt = Qdt(
+            api_url=os.getenv('API_URL', default=None),
+            authorization_provider=self.ap_contract
+        )
+        response = qdt.create_payment(
+            payment_index=0,
+            contract='payments/eblanium',
+            token='ebl',
+            amount=0.01,
+            sender=0,
+            recipient=1
+        )
+        self.assertEqual(response.get('success'), 'true')
+
+    def test_get_payments_eblanium(self):
+        qdt = Qdt(
+            api_url=os.getenv('API_URL', default=None),
+            authorization_provider=self.ap_contract
+        )
+        response = qdt.get_payments(
+            contract='payments/eblanium',
+        )
+        print(response)
+        self.assertEqual(response.get('success'), 'true')
+
+    def test_get_payment_powersmart(self):
+        qdt = Qdt(
+            api_url=os.getenv('API_URL', default=None),
+            authorization_provider=self.ap_contract
+        )
+        response = qdt.get_payment(
+            payment_index=3949652,
+            contract='payments/powersmart',
+        )
+        payment = response.get('payment')
+        paid = payment.get('status')
+        new_payment_index = response.get('index')
+        self.assertEqual(paid, 'paid')
+        self.assertEqual(type(new_payment_index), int)
 
 
 if __name__ == '__main__':
