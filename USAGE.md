@@ -1,4 +1,5 @@
 # Usage
+## Installation
 The package is under development, until the package is distributed from pypi, execute:
 
 ```bash
@@ -16,40 +17,50 @@ You will have errors on `m2cypto`, follow the installation guide on [this page](
     3) Install it inside the dedicated folder of the disk `C:\QNode\`
 
 
-2. Generate a private key for transfer and contract interactions:
+2. If you plan to use contracts, you need to create one in QNode:
+   1) Open QNode
+   2) Open Product tab
+   3) Select QContracts
+   4) Press "Create Contract now"
+   5) Put names for `Contract` (ie: `eblanium`) and Vendor (ie: Eblanium.com)
+   6) Pay QDT to create contract
+   7) Done
+
+
+3. Generate a private key for transfer and payments interactions:
 ```bash
 # transfer
 openssl genrsa -out transfer.key 2048
 openssl rsa -in transfer.key -pubout -out transfer.pub
 
-# contract
-openssl genrsa -out contract.key 2048
-openssl rsa -in contract.key -pubout -out contract.pub
+# payments, contractname = eblanium in Eblanium case
+openssl genrsa -out payments-contractname.key 2048
+openssl rsa -in payments-contractname.key -pubout -out payments-contractname.pub
 ```
-3. Put inside your QNode folder:
+4. Put inside your QNode folder:
 ```
 C:\QNode\> dir
 qnode.main.exe
-transfer.pub    <-- Recently generated
-contract.pub    <-- Recently generated
+transfer.pub                  <-- Recently generated
+payments-contractname.pub     <-- Recently generated
 libeay32.dll    <-- Copy from dll/ of the repo
 ssleay32.dll    <-- Copy from dll/ of the repo
 ...blockain folders
 ```
+5. Done
 
-## Transfer
-Use this to transfer tokens from your node to any node.
+## Client
 
-Put `transfer.key` inside your project, initiate `qchainpy.Client` and make a transfer:
-```
-# Transfer
-
+In order to make requests, initialize `qchainpy.Client` with appropriate private key.
+```python
 import os
 from pathlib import Path
 from qchainpy.client import Client
 
-# Get full key_path inside current folder
-key_path = os.path.join(Path(__file__).resolve().parent, 'transfer.key')
+# Get full path inside current folder
+# transfer.key for Transfer
+# payments-contractname.key for Payments
+key_path = os.path.join(Path(__file__).resolve().parent, '[PRIVATE].key')
 
 # Get IP or domain of your node
 api_url = 'NODE_URL/api/'
@@ -60,7 +71,13 @@ client = Client(
     key_path=key_path,
     passphrase=None
 ).get_client()
+```
 
+
+## Transfer
+Transfer tokens from your node to any node.
+
+```python
 # Transfer funds to some node_id, address is not supported yet
 response = client.transfer(
     token='ebl',
@@ -71,50 +88,96 @@ print(response.get('success')) >> 'true'
 ```
 
 ## Payments
-Use this to interact with contracts: create payments and check their statuses.
+Interact with contracts: create payments and check their statuses.
 
-Put `contract.key` inside your project, initiate `qchainpy.Client` and make a transfer:
+### Get index
+Index is used to search for transactions after creating a payment.
+
+> Each time you call `client.get_payments()`, it returns you `index`, store it in your DB.
+```python
+# Payments
+# Get index to search for transactions after creating a payment
+response = client.get_payments(
+   contract='payments/contractname'
+)
+transactions_index = response.get('index')
 ```
-# Contract
 
-import os
-from pathlib import Path
-from qchainpy.client import Client
-
-# The same steps as for Transfer
-key_path = os.path.join(Path(__file__).resolve().parent, 'contract.key')
-api_url = 'NODE_URL/api/'
-client = Client(
-    api_url=api_url,
-    key_path=key_path,
-    passphrase=None
-).get_client()
-
+### Create payment
+1. Generate local_payment_id in your DB
+2. Create payment with local_payment_id
+```python
+# Payments
 # Create payment
 response = client.create_payment(
-   payment_index=0, #Local payment index
-   contract='payments/contract', 
+   contract='payments/contractname', 
    token='ebl',
    amount=0.01,
    sender=0,  # node_id or address
-   recipient=1  # node_id or address
+   recipient=1,  # node_id or address
+   local_payment_id=123456789,  # Local payment id, which you store in DB
 )
-payment_index = response.get('index')
-print(payment_index) >> 3888839
+print(response.get('success')) >> 'true'
+```
 
-# Get payment and check its status
-response = client.get_payment(
-   payment_index=payment_index,
-   contract='payments/contract',
+### Get all payments
+Returns all payments of a contract.
+
+> It will take long when payments list grows, use `get_payments(local_payment_id, index)` instead.
+```python
+# Payments
+# Get payments
+response = client.get_payments(
+   contract='payments/contractname'
 )
-print(response.get('payment')) 
+print(response) 
 >> {
-      'index': 3888839, 
-      'payment': 0, 
-      'account': 1, 
-      'status': 'paid', 
-      'amount': 10, 
-      'currency': 'EBL', 
-      'time': '2021-08-18T07:34:23.000Z'
+      'success': 'true',
+      'payments': [{
+         'index': 3888839, 
+         'payment': 123456789, 
+         'account': 1, 
+         'status': 'paid', 
+         'amount': 10, 
+         'currency': 'EBL', 
+         'time': '2021-08-18T07:34:23.000Z'
+      },{
+         'index': 3895925, 
+         'payment': 151242141, 
+         'account': 1, 
+         'status': 'declain', 
+         'amount': 10, 
+         'currency': 'EBL', 
+         'time': '2021-10-18T07:34:23.000Z'
+      }...],
+      'index': 3000999
+   }
+   
+```
+
+### Get payment with `local_payment_id` and `index`
+Index is `transactions_index` we get before.
+```python
+# Payments
+# Get payments with params
+response = client.get_payments(
+   contract='payments/contractname',
+   local_payment_id=123456789,
+   index=transactions_index
+)
+print(response) 
+>> {
+      'success': 'true',
+      'payments': [{
+         'index': 3888839, 
+         'payment': 123456789, 
+         'account': 1, 
+         'status': 'paid', 
+         'amount': 10, 
+         'currency': 'EBL', 
+         'time': '2021-08-18T07:34:23.000Z'
+      }],
+      'index': 3200999
    }
 ```
+> You can still call `client.get_payments()` with `contract` and `local_payment_id`, but it will take long.

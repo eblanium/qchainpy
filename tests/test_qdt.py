@@ -67,16 +67,16 @@ class TestQdtMethods(unittest.TestCase):
             authorization_provider=self.ap_contract
         )
         response = qdt.create_payment(
-            payment_index=0,
             contract='payments/eblanium',
             token='ebl',
             amount=0.01,
             sender=0,
-            recipient=1
+            recipient=1,
+            local_payment_id=4
         )
         self.assertEqual(response.get('success'), 'true')
 
-    def test_get_payments_eblanium(self):
+    def test_get_payments_eblanium_all(self):
         qdt = Qdt(
             api_url=os.getenv('API_URL', default=None),
             authorization_provider=self.ap_contract
@@ -84,23 +84,54 @@ class TestQdtMethods(unittest.TestCase):
         response = qdt.get_payments(
             contract='payments/eblanium',
         )
-        print(response)
-        self.assertEqual(response.get('success'), 'true')
+        self.assertGreater(len(response.get('payments')), 1)
+
+    def test_get_payments_eblanium_one_without_index(self):
+        qdt = Qdt(
+            api_url=os.getenv('API_URL', default=None),
+            authorization_provider=self.ap_contract
+        )
+        response = qdt.get_payments(
+            contract='payments/eblanium',
+            local_payment_id=3
+        )
+        self.assertEqual(response.get('payments')[0].get('payment'), 3)
+
+    def test_get_payments_eblanium_two_with_index(self):
+        qdt = Qdt(
+            api_url=os.getenv('API_URL', default=None),
+            authorization_provider=self.ap_contract
+        )
+        response = qdt.get_payments(
+            contract='payments/eblanium',
+            local_payment_id=4,
+            index=3000000
+        )
+        self.assertEqual(len(response.get('payments')), 2)
+
+    def test_get_payments_eblanium_not_found(self):
+        qdt = Qdt(
+            api_url=os.getenv('API_URL', default=None),
+            authorization_provider=self.ap_contract
+        )
+        response = qdt.get_payments(
+            contract='payments/eblanium',
+            local_payment_id=99999,
+            index=3000000
+        )
+        self.assertEqual(len(response.get('payments')), 0)
 
     def test_get_payment_powersmart(self):
         qdt = Qdt(
             api_url=os.getenv('API_URL', default=None),
             authorization_provider=self.ap_contract
         )
-        response = qdt.get_payment(
-            payment_index=3949652,
+        response = qdt.get_payments(
             contract='payments/powersmart',
+            local_payment_id=10115,
+            index=3949652
         )
-        payment = response.get('payment')
-        paid = payment.get('status')
-        new_payment_index = response.get('index')
-        self.assertEqual(paid, 'paid')
-        self.assertEqual(type(new_payment_index), int)
+        self.assertEqual(response.get('payments')[0].get('account'), 30109)
 
 
 if __name__ == '__main__':

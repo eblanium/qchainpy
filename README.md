@@ -9,14 +9,11 @@ Requires `python3`, `m2crypto` with `openssl`.
 ### `client.transfer(token, amount, recipient)`
 Transfer funds from your node to any node.
 
-### `client.create_payment(payment_index, contract, token, amount, sender, recipient)`
+### `client.create_payment(contract, token, amount, sender, recipient, local_payment_id)`
 Create payment using a smart contract.
 
-### `client.get_payment(payment_index, contract)`
-Get specific payment of a smart contract.
-
-### `client.get_payments(contract)`
-Get all payments of a smart contract.
+### `client.get_payments(contract, local_payment_id=None, index=0)`
+Get all or specific payment of a smart contract.
 
 ## Usage
 Read [Usage Guidelines](USAGE.md)

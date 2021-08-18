@@ -33,10 +33,10 @@ class Qdt:
             return r
         return response.json()
 
-    def create_payment(self, payment_index, contract, token, amount, sender, recipient):
+    def create_payment(self, contract, token, amount, sender, recipient, local_payment_id):
         token = token.lower()
         request_url = self._api_url + contract + '/new'
-        data = {'payment': payment_index}
+        data = {'payment': local_payment_id}
         if str(recipient).isdigit() or type(recipient) == int:
             data = {**data, **{'accountfrom': sender, 'accountto': recipient}}
         else:
@@ -60,13 +60,11 @@ class Qdt:
             return r
         return response.json()
 
-    def get_payment(self, payment_index, contract):
-        request_url = self._api_url + contract + '/pay?' + urlencode(OrderedDict(index=payment_index))
-        data = {'index': payment_index}
+    def get_payments(self, contract, local_payment_id=None, index=0):
+        request_url = self._api_url + contract + '/pay?' + urlencode(OrderedDict(index=index))
         response = requests.get(
             url=request_url
         )
-        new_payment_index = response.json().get('index')
         if response.ok:
             r = response.json()
             if r.get('success') == 'false':
@@ -75,19 +73,16 @@ class Qdt:
             else:
                 payments = r.get('payments')
                 success = {'success': 'true'}
-                if payment_index == 0:
-                    r = {**success, **r}
-                else:
-                    payment = payments[0] if len(payments) == 1 else next((item for item in payments if item["index"] == payment_index), None)
+                if local_payment_id:
+                    local_payments = [item for item in payments if item["payment"] == local_payment_id]
                     r = {**success, **{
-                        'payment': payment,
+                        'payments': local_payments,
                         'index': r.get('index')
                     }}
+                else:
+                    r = {**success, **r}
             return r
         return response.json()
-
-    def get_payments(self, contract):
-        return self.get_payment(0, contract)
 
     def _map_error(self, error):
         if error == 'The specified file was not found':
